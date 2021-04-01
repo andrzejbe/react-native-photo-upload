@@ -84,7 +84,7 @@ export default class PhotoUpload extends React.Component {
         this.setState({ buttonDisabled: false });
 
         let rotation = 0;
-        const { originalRotation } = response;
+
 
         if (this.props.onResponse) this.props.onResponse(response);
 
@@ -107,15 +107,19 @@ export default class PhotoUpload extends React.Component {
         let { maxHeight, maxWidth, quality, format } = this.state;
 
         //Determining rotation param
-        if (originalRotation === 90) {
-          rotation = 90;
-        } else if (originalRotation === 180) {
-          //For a few images rotation is 180.
-          rotation = -180;
-        } else if (originalRotation === 270) {
-          //When taking images with the front camera (selfie), the rotation is 270.
-          rotation = -90;
+        if (response.originalRotation) {
+          const { originalRotation } = response;
+          if (originalRotation === 90) {
+            rotation = 90;
+          } else if (originalRotation === 180) {
+            //For a few images rotation is 180.
+            rotation = -180;
+          } else if (originalRotation === 270) {
+            //When taking images with the front camera (selfie), the rotation is 270.
+            rotation = -90;
+          }
         }
+
         // resize image
         const resizedImageUri = await ImageResizer.createResizedImage(
           `data:image/jpeg;base64,${response.data}`,
@@ -123,7 +127,12 @@ export default class PhotoUpload extends React.Component {
           maxWidth,
           format,
           quality,
-          rotation
+          rotation,
+          undefined,
+          undefined,
+          {
+            mode: "cover",
+          }
         );
 
         if (this.props.onResizedImageUri)
@@ -142,7 +151,14 @@ export default class PhotoUpload extends React.Component {
         });
 
         // handle photo in props functions as data string
-        if (this.props.onPhotoSelect) this.props.onPhotoSelect(photoData);
+        if (this.props.onPhotoSelect) this.props.onPhotoSelect({
+            data: photoData,
+            fileName: null,
+            fileSize: resizedImageUri.size,
+            width: resizedImageUri.width,
+            height: resizedImageUri.height,
+            uri: resizedImageUri.uri,
+        });
       });
     }
   };
